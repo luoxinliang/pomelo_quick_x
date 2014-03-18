@@ -1,0 +1,605 @@
+--
+--local Protobuf = {}
+--
+--Protobuf.init = function(protos) 
+--    Protobuf.encoder.init(protos.encoderProtos)
+--    Protobuf.decoder.init(protos.decoderProtos)
+--end
+--
+--Protobuf.encode = function(key, msg)
+--    return Protobuf.encoder.encode(key, msg)
+--end
+--
+--Protobuf.decode = function(key, msg)
+--    return Protobuf.decoder.decode(key, msg)
+--end
+--
+--
+--
+--
+--local constants = {}
+--constants.TYPES = {
+--    uInt32 = 0,
+--    sInt32 = 0,
+--    int32 = 0,
+--    double = 1,
+--    string = 2,
+--    message = 2,
+--    float = 5
+--}
+--
+--
+--
+--
+--
+--local Util = {}
+--
+--Util.isSimpleType = function(type)
+--    return ( type == 'uInt32' or
+--        type == 'sInt32' or
+--        type == 'int32'  or
+--        type == 'uInt64' or
+--        type == 'sInt64' or
+--        type == 'float'  or
+--        type == 'double' )
+--end
+--
+--
+--
+--
+--
+----local Codec = exports.Protobuf.codec {}
+--
+--local buffer = new ArrayBuffer(8)
+----local float32Array = new Float32Array(buffer)
+----local float64Array = new Float64Array(buffer)
+----local uInt8Array = new Uint8Array(buffer)
+--
+--Codec.encodeUInt32 = function(n)
+--    local n = parseInt(n)
+--    if isNaN(n) or n < 0)
+--        return nil
+--    end
+--
+--    local result = {}
+--    do
+--        local tmp = n % 128
+--        local next = Math.floor(n/128)
+--
+--        if next not == 0)
+--            tmp = tmp + 128
+--        end
+--        result.push(tmp)
+--        n = next
+--    while n not == 0)
+--
+--    return result
+--end
+--
+--Codec.encodeSInt32 = function(n)
+--    local n = parseInt(n)
+--    if isNaN(n))
+--        return nil
+--    end
+--    n = n<0?(Math.abs(n)*2-1)=n*2
+--
+--    return Codec.encodeUInt32(n)
+--end
+--
+--Codec.decodeUInt32 = function(bytes)
+--    local n = 0
+--
+--    for i = 0 i < bytes.length 
+--        local m = parseInt(bytes{i})
+--        n = n + ((m & 0x7f) * Math.pow(2,(7*i)))
+--        if m < 128)
+--            return n
+--        end
+--    end
+--
+--    return n
+--end
+--
+--
+--Codec.decodeSInt32 = function(bytes)
+--    local n = this.decodeUInt32(bytes)
+--    local flag = ((n%2) == 1)?-1=1
+--
+--    n = ((n%2 + n)/2)*flag
+--
+--    return n
+--end
+--
+----Codec.encodeFloat = function(float)
+----    float32Array{0} = float
+----    return uInt8Array
+----end
+----
+----Codec.decodeFloat = function(bytes, offset)
+----    if not bytes or bytes.length < (offset +4))
+----        return nil
+----    end
+----
+----    for i = 0 i < 4 
+----        uInt8Array{i} = bytes{offset + i}
+----    end
+----
+----    return float32Array{0}
+----end
+----
+----Codec.encodeDouble = function(double)
+----    float64Array{0} = double
+----    return uInt8Array.subarray(0, 8)
+----end
+----
+----Codec.decodeDouble = function(bytes, offset)
+----    if not bytes or bytes.length < (8 + offset))
+----        return nil
+----    end
+----
+----    for i = 0 i < 8 
+----        uInt8Array{i} = bytes{offset + i}
+----    end
+----
+----    return float64Array{0}
+----end
+--
+--Codec.encodeStr = function(bytes, offset, str)
+--    for i = 0 i < str.length 
+--        local code = str.charCodeAt(i)
+--        local codes = encode2UTF8(code)
+--
+--        for j = 0 j < codes.length j++)
+--            bytes{offset} = codes{j}
+--            offset++
+--        end
+--    end
+--
+--    return offset
+--end
+--
+--Codec.decodeStr = function(bytes, offset, length)
+--    local array = {}
+--    local length = offset + length
+--
+--    while offset < end 
+--        local code = 0
+--
+--        if bytes{offset} < 128)
+--            code = bytes{offset}
+--
+--            offset += 1
+--        else if bytes{offset} < 224)
+--            code = ((bytes{offset} & 0x3f)<<6) + (bytes{offset+1} & 0x3f)
+--            offset += 2
+--        else
+--            code = ((bytes{offset} & 0x0f)<<12) + ((bytes{offset+1} & 0x3f)<<6) + (bytes{offset+2} & 0x3f)
+--            offset += 3
+--        end
+--
+--        array.push(code)
+--
+--    end
+--
+--    local str = ''
+--    for i = 0 i < array.length)
+--        str += String.fromCharCode.apply(nil, array.slice(i, i + 10000))
+--        i += 10000
+--    end
+--
+--    return str
+--end
+--
+--Codec.byteLength = function(str)
+--    if typeof(str) not == 'string')
+--        return -1
+--    end
+--
+--    local length = 0
+--
+--    for i = 0 i < str.length 
+--        local code = str.charCodeAt(i)
+--        length += codeLength(code)
+--    end
+--
+--    return length
+--end
+--
+--function encode2UTF8(charCode)
+--    if charCode <= 0x7f)
+--        return {charCode}
+--    else if charCode <= 0x7ff)
+--        return {0xc0|(charCode>>6), 0x80|(charCode & 0x3f)}
+--    else
+--        return {0xe0|(charCode>>12), 0x80|((charCode & 0xfc0)>>6), 0x80|(charCode & 0x3f)}
+--    end
+--end
+--
+--function codeLength(code)
+--    if code <= 0x7f)
+--        return 1
+--    else if code <= 0x7ff)
+--        return 2
+--    else
+--        return 3
+--    end
+--end
+--
+--
+--
+--
+--local protobuf = exports.Protobuf
+--local MsgEncoder = exports.Protobuf.encoder {}
+--
+--local codec = protobuf.codec
+--local constant = protobuf.constants
+--local util = protobuf.util
+--
+--MsgEncoder.init = function(protos)
+--    this.protos = protos
+--end
+--
+--MsgEncoder.encode = function(route, msg)
+--    --Get protos from protos map use the route as key
+--    local protos = this.protos{route}
+--
+--    --Check msg
+--    if not checkMsg(msg, protos))
+--        return nil
+--    end
+--
+--    --Set the length of the buffer 2 times bigger to prevent overflow
+--    local length = codec.byteLength(JSON.stringify(msg))
+--
+--    --Init buffer and offset
+--    local buffer = new ArrayBuffer(length)
+--    local uInt8Array = new Uint8Array(buffer)
+--    local offset = 0
+--
+--    if protos)
+--        offset = encodeMsg(uInt8Array, offset, protos, msg)
+--        if offset > 0)
+--            return uInt8Array.subarray(0, offset)
+--        end
+--    end
+--
+--    return nil
+--end
+--
+--function checkMsg(msg, protos)
+--    if not protos)
+--        return false
+--    end
+--
+--    for name in protos)
+--        local proto = protos{name}
+--
+--        --All required element must exist
+--        switch(proto.option)
+--            case 'required' =
+--                if typeof(msg{name}) == 'undefined')
+--                    return false
+--                end
+--            case 'optional' =
+--                if typeof(msg{name}) not == 'undefined')
+--                    if protos.__messages{proto.type})
+--                        checkMsg(msg{name}, protos.__messages{proto.type})
+--                    end
+--                end
+--                break
+--            case 'repeated' =
+--                --Check nest message in repeated elements
+--                if msg{name} and protos.__messages{proto.type})
+--                    for i = 0 i < msg{name}.length 
+--                        if not checkMsg(msg{name}{i}, protos.__messages{proto.type}))
+--                            return false
+--                        end
+--                    end
+--                end
+--                break
+--        end
+--    end
+--
+--    return true
+--end
+--
+--function encodeMsg(buffer, offset, protos, msg)
+--    for name in msg)
+--        if protos{name})
+--            local proto = protos{name}
+--            switch(proto.option)
+--                case 'required' =
+--                case 'optional' =
+--                    offset = writeBytes(buffer, offset, encodeTag(proto.type, proto.tag))
+--                    offset = encodeProp(msg{name}, proto.type, offset, buffer, protos)
+--                    break
+--                case 'repeated' =
+--                    if msg{name}.length > 0)
+--                        offset = encodeArray(msg{name}, proto, offset, buffer, protos)
+--                    end
+--                    break
+--            end
+--        end
+--    end
+--
+--    return offset
+--end
+--
+--function encodeProp(value, type, offset, buffer, protos)
+--    switch(type)
+--        case 'uInt32'=
+--            offset = writeBytes(buffer, offset, codec.encodeUInt32(value))
+--            break
+--        case 'int32' =
+--        case 'sInt32'=
+--            offset = writeBytes(buffer, offset, codec.encodeSInt32(value))
+--            break
+--        case 'float'=
+--            writeBytes(buffer, offset, codec.encodeFloat(value))
+--            offset += 4
+--            break
+--        case 'double'=
+--            writeBytes(buffer, offset, codec.encodeDouble(value))
+--            offset += 8
+--            break
+--        case 'string'=
+--            local length = codec.byteLength(value)
+--
+--            --Encode length
+--            offset = writeBytes(buffer, offset, codec.encodeUInt32(length))
+--            --write string
+--            codec.encodeStr(buffer, offset, value)
+--            offset += length
+--            break
+--        default =
+--            if protos.__messages{type})
+--                --Use a tmp buffer to build an internal msg
+--                local tmpBuffer = new ArrayBuffer(codec.byteLength(JSON.stringify(value)))
+--                local length = 0
+--
+--                length = encodeMsg(tmpBuffer, length, protos.__messages{type}, value)
+--                offset = writeBytes(buffer, offset, codec.encodeUInt32(length))
+--                for i = 0 i < length 
+--                    buffer{offset} = tmpBuffer{i}
+--                    offset++
+--                end
+--            end
+--            break
+--    end
+--
+--    return offset
+--end
+--
+--function encodeArray(array, proto, offset, buffer, protos)
+--    local i = 0
+--
+--    if util.isSimpleType(proto.type))
+--        offset = writeBytes(buffer, offset, encodeTag(proto.type, proto.tag))
+--        offset = writeBytes(buffer, offset, codec.encodeUInt32(array.length))
+--        for i = 0 i < array.length 
+--            offset = encodeProp(array{i}, proto.type, offset, buffer)
+--        end
+--    else
+--        for i = 0 i < array.length 
+--            offset = writeBytes(buffer, offset, encodeTag(proto.type, proto.tag))
+--            offset = encodeProp(array{i}, proto.type, offset, buffer, protos)
+--        end
+--    end
+--
+--    return offset
+--end
+--
+--function writeBytes(buffer, offset, bytes)
+--    for i = 0 i < bytes.length i++, offset++)
+--        buffer{offset} = bytes{i}
+--    end
+--
+--    return offset
+--end
+--
+--function encodeTag(type, tag)
+--    local value = constant.TYPES{type}or2
+--    return codec.encodeUInt32((tag<<3)|value)
+--end
+--
+--
+--
+--local protobuf = exports.Protobuf
+--local MsgDecoder = exports.Protobuf.decoder {}
+--
+--local codec = protobuf.codec
+--local util = protobuf.util
+--
+--local buffer
+--local offset = 0
+--
+--MsgDecoder.init = function(protos)
+--    this.protos = protos or end
+--end
+--
+--MsgDecoder.setProtos = function(protos)
+--    if protos)
+--        this.protos = protos
+--    end
+--end
+--
+--MsgDecoder.decode = function(route, buf)
+--    local protos = this.protos{route}
+--
+--    buffer = buf
+--    offset = 0
+--    if protos)
+--        return decodeMsg(end, protos, buffer.length)
+--    end
+--
+--    return nil
+--end
+--
+--function decodeMsg(msg, protos, length)
+--    while offset<length)
+--        local head = getHead()
+--        local type = head.type
+--        local tag = head.tag
+--        local name = protos.__tags{tag}
+--
+--        switch(protos{name}.option)
+--            case 'optional' =
+--            case 'required' =
+--                msg{name} = decodeProp(protos{name}.type, protos)
+--                break
+--            case 'repeated' =
+--                if not msg{name})
+--                    msg{name} = {}
+--                end
+--                decodeArray(msg{name}, protos{name}.type, protos)
+--                break
+--        end
+--    end
+--
+--    return msg
+--end
+--
+--function isFinish(msg, protos)
+--    return (not protos.__tags{peekHead().tag})
+--end
+--
+--function getHead()
+--    local tag = codec.decodeUInt32(getBytes())
+--
+--    return 
+--        type = tag&0x7,
+--        tag = tag>>3
+--    end
+--end
+--
+--function peekHead()
+--    local tag = codec.decodeUInt32(peekBytes())
+--
+--    return 
+--        type = tag&0x7,
+--        tag = tag>>3
+--    end
+--end
+--
+--function decodeProp(type, protos)
+--    switch(type)
+--        case 'uInt32'=
+--            return codec.decodeUInt32(getBytes())
+--        case 'int32' =
+--        case 'sInt32' =
+--            return codec.decodeSInt32(getBytes())
+--        case 'float' =
+--            local float = codec.decodeFloat(buffer, offset)
+--            offset += 4
+--            return float
+--        case 'double' =
+--            local double = codec.decodeDouble(buffer, offset)
+--            offset += 8
+--            return double
+--        case 'string' =
+--                local length = codec.decodeUInt32(getBytes())
+--
+--                local str =  codec.decodeStr(buffer, offset, length)
+--                offset += length
+--
+--                return str
+--            default =
+--                if protos and protos.__messages{type})
+--                    local length = codec.decodeUInt32(getBytes())
+--                    local msg {}
+--                    decodeMsg(msg, protos.__messages{type}, offset+length)
+--                    return msg
+--                end
+--                break
+--        end
+--    end
+--
+--    function decodeArray(array, type, protos)
+--        if util.isSimpleType(type))
+--            local length = codec.decodeUInt32(getBytes())
+--
+--            for i = 0 i < length 
+--                array.push(decodeProp(type))
+--            end
+--        else
+--            array.push(decodeProp(type, protos))
+--        end
+--    end
+--
+--    function getBytes(flag)
+--        local bytes = {}
+--        local pos = offset
+--        flag = flag or false
+--
+--        local b
+--
+--        do
+--            b = buffer{pos}
+--            bytes.push(b)
+--            pos++
+--        while b >= 128)
+--
+--        if not flag)
+--            offset = pos
+--        end
+--        return bytes
+--    end
+--
+--    function peekBytes()
+--        return getBytes(true)
+--    end
+--
+--
+--
+--(function (exports) 
+--
+--    exports.Protobuf.Parser {}
+--    local Parser = exports.Protobuf.Parser
+--
+--    Parser.parse = function(protos)
+--        local maps {}
+--        for key in protos)
+--            maps{key} = parseObject(protos{key})
+--        end
+--
+--        return maps
+--    end
+--
+--    function parseObject(obj) 
+--        local proto {}
+--        local nestProtos {}
+--        local tags {}
+--
+--        for name in obj) 
+--            local tag = obj{name}
+--            local params = name.split(' ')
+--
+--        switch(params{0}) 
+--            case 'message'=
+--                if params.length not = 2)
+--                    continue
+--                nestProtos{params{1}} = parseObject(tag)
+--                continue
+--            case 'required'=
+--            case 'optional'=
+--            case 'repeated'= 
+--                --params length should be 3 and tag can't be duplicated
+--                if params.length not = 3 or tags{tag})
+--                    continue
+--                end
+--                proto{params{2}} = {
+--                    option = params{0},
+--                    type = params{1},
+--                    tag = tag
+--                }
+--                tags{tag} = params{2}
+--            end
+--        end
+--    end
+--
+--    proto.__messages = nestProtos
+--    proto.__tags = tags
+--    return proto
+--end
+--
+--
