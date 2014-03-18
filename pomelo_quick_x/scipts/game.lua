@@ -13,6 +13,6 @@ function game.exit()
 end
 
 function game.enterMainScene()
-    display.loadScene("SceneMain")
+    display.replaceScene(require("ChatScene").new())
 end
 

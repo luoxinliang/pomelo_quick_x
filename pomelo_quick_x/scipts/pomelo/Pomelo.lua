@@ -1,4 +1,5 @@
 --local Protobuf = require("Protobuf") -- 暂时还不支持protobuf，如有可能，请加上并告知。谢谢。
+local scheduler = require("framework.scheduler")
 
 local Protocol = require("pomelo.Protocol")
 local Package = require("pomelo.Package")
@@ -47,7 +48,7 @@ function Pomelo:ctor()
 end
 
 function Pomelo:init(params,cb)
-    --echoInfo("Pomelo:init()")
+    echoInfo("Pomelo:init()")
   
     self.initCallback = cb
     
