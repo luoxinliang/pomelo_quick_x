@@ -24,23 +24,7 @@ Protocol.strencode = function(str)
 end
 
 Protocol.strdecode = function(bytes)
-    local array = {}
-    local charCode = 0
-    local offset = 1
-    while offset<=#bytes do
-        if bytes[offset] < 128 then
-            charCode = bytes[offset]
-            offset = offset + 1
-        elseif bytes[offset] < 224 then
-            charCode = bit.lshift(bit.band(bytes[offset],0x3f),6) + bit.band(bytes[offset+1],0x3f)
-            offset = offset + 2
-        else 
-            charCode = bit.lshift(bit.band(bytes[offset],0x0f),12) + bit.lshift(bit.band(bytes[offset+1],0x3f),6) + bit.band(bytes[offset+2],0x3f)
-            offset = offset + 3
-        end
-        table.insert(array,charCode)
-    end
-    return string.char(unpack(array))
+    return string.char(unpack(bytes))
 end
 
 return Protocol
