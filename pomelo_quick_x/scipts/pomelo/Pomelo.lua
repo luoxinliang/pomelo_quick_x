@@ -48,8 +48,6 @@ function Pomelo:ctor()
 end
 
 function Pomelo:init(params,cb)
-    echoInfo("Pomelo:init()")
-  
     self.initCallback = cb
     
     local host = params.host
@@ -67,18 +65,15 @@ function Pomelo:init(params,cb)
 end
 
 function Pomelo:request(route,msg,cb) 
-    --echoInfo("Pomelo:request()")
-    
     if not route then 
         return
     end
     
     if not self:_isReady() then
-        echoError("Pomelo:request() - socket not ready")
+        printError("Pomelo:request() - socket not ready")
         return
     end 
     
-    -- self.reqId++
     self.reqId = self.reqId + 1
     self:_sendMessage(self.reqId,route,msg)
     
@@ -88,7 +83,7 @@ end
 
 function Pomelo:notify(route,msg) 
     if not self:_isReady() then
-        echoError("WebSockets:_send() - socket not ready")
+        printError("WebSockets:_send() - socket not ready")
         return
     end 
     
@@ -97,7 +92,7 @@ function Pomelo:notify(route,msg)
 end 
 
 function Pomelo:disconnect() 
-    echoInfo("Pomelo:disconnect()")
+--    printf("Pomelo:disconnect()")
     if self.socket and self.socket:getReadyState() == kStateOpen then
         self.socket:close()
         self.socket = nil
@@ -121,19 +116,9 @@ function Pomelo:_initWebSocket(url,cb)
         local obj = Package.encode(Package.TYPE_HANDSHAKE,Protocol.strencode(json.encode(self.handshakeBuffer)))
         self:_send(obj)
     end
-    
-    local _bin2hex = function(binary)
-        local t = {}
-        for i = 1,string.len(binary) do
-            t[#t + 1] = string.byte(binary,i)
-        end
-        return t
-    end
 
     local onmessage = function(message)
---        echoInfo("onmessage os.time()=%s",os.time()) 
-        self:_processPackage(Package.decode(_bin2hex(message)),cb)
-        
+        self:_processPackage(Package.decode(message),cb)
         -- new package arrived,update the heartbeat timeout
         if self.heartbeatTimeout~=0 then
             self.nextHeartbeatTimeout = os.time() + self.heartbeatTimeout
@@ -148,23 +133,20 @@ function Pomelo:_initWebSocket(url,cb)
         self:emit('close',event)
     end
 
-    self.socket = WebSocket:create(url)
+    self.socket = cc.WebSocket:create(url)
     
-    self.socket:registerScriptHandler(onopen,kWebSocketScriptHandlerOpen)
-    self.socket:registerScriptHandler(onmessage,kWebSocketScriptHandlerMessage)
-    self.socket:registerScriptHandler(onerror,kWebSocketScriptHandlerClose)
-    self.socket:registerScriptHandler(onerror,kWebSocketScriptHandlerError)
+    self.socket:registerScriptHandler(onopen,cc.WEBSOCKET_OPEN)
+    self.socket:registerScriptHandler(onmessage,cc.WEBSOCKET_MESSAGE)
+    self.socket:registerScriptHandler(onclose,cc.WEBSOCKET_CLOSE)
+    self.socket:registerScriptHandler(onerror,cc.WEBSOCKET_ERROR)
     
 end
 
-function Pomelo:_processPackage(msg) 
+function Pomelo:_processPackage(msg)
     self.handlers[msg.type](msg.body)
 end
     
 function Pomelo:_processMessage(msg) 
---    echoInfo("Pomelo:_processMessage()")
---    echoInfo("msg.id=%s,msg.route=%s,msg.body=%s",msg.id,msg.route,msg.body)
---    echoInfo("json.encode(msg.body)=%s",json.encode(msg.body))
     if msg.id==0 then
         -- server push message
         self:emit(msg.route,msg.body)
@@ -172,16 +154,12 @@ function Pomelo:_processMessage(msg)
 
     --if have a id then find the callback function with the request
     local cb = self._callbacks[msg.id]
---    echoInfo("msg.id=%s,type(cb)=%s",msg.id,type(cb))
     self._callbacks[msg.id] = nil
     if type(cb) ~= 'function' then
         return
     end
     
---    --echoInfo("type(msg.body)=%s",type(msg.body))
     cb(msg.body)
-    
---    return self
 end
 
 function Pomelo:_processMessageBatch(msgs) 
@@ -191,10 +169,11 @@ function Pomelo:_processMessageBatch(msgs)
 end
 
 function Pomelo:_isReady()
-    return self.socket and self.socket:getReadyState() == kStateOpen
+    return self.socket and self.socket:getReadyState() == cc.WEBSOCKET_STATE_OPEN
 end
 
 function Pomelo:_sendMessage(reqId,route,msg)
+--    printf("Pomelo:_sendMessage")
     local _type = Message.TYPE_REQUEST
     if reqId == 0 then
         _type = Message.TYPE_NOTIFY
@@ -228,12 +207,12 @@ end
 
 function Pomelo:_send(packet)
     if self:_isReady() then
-        self.socket:sendBinaryMsg(packet,table.nums(packet))
+        self.socket:sendBinary(packet,table.nums(packet))
     end
 end
 
 function Pomelo:heartbeat(data)
---    echoInfo("Pomelo:heartbeat(data)")
+--    printf("Pomelo:heartbeat(data)")
      
     if self.heartbeatInterval==0 then
         -- no heartbeat
@@ -265,21 +244,17 @@ function Pomelo:heartbeat(data)
 end
 
 function Pomelo:heartbeatTimeoutCb() 
---    echoInfo("Pomelo:heartbeatTimeoutCb() os.time()=%s",os.time())
     local gap = self.nextHeartbeatTimeout - os.time()
---    echoInfo("gap=%s,self.gapThreshold=%s",gap,self.gapThreshold)
     if gap > self.gapThreshold then
         self.heartbeatTimeoutId = self:_setTimeout(handler(self,self.heartbeatTimeoutCb),gap)
     else 
         self:emit('heartbeat timeout')
---        echoInfo('heartbeat timeout')
+--        printf('heartbeat timeout')
         self:disconnect()
     end
 end
 
 function Pomelo:_handshake(data) 
---    echoInfo("Pomelo:_handshake Protocol.strdecode(data)=%s",Protocol.strdecode(data))
-    
     data = json.decode(Protocol.strdecode(data))
     
     if data.code == RES_OLD_CLIENT then
@@ -305,9 +280,7 @@ function Pomelo:_handshake(data)
 end
 
 function Pomelo:_onData(data) 
---    echoInfo("Pomelo:_onData()")
     local msg = Message.decode(data)
---    --echoInfo("msg.id=%s",msg.id)
     if msg.id > 0 then
         msg.route = self.routeMap[msg.id]
         self.routeMap[msg.id] = nil
@@ -316,7 +289,6 @@ function Pomelo:_onData(data)
         end
     end
     msg.body = self:_deCompose(msg)
---    echoInfo("msg.body=%s",json.encode(msg.body))
     self:_processMessage(msg)
 end
 
@@ -352,7 +324,7 @@ function Pomelo:_deCompose(msg)
 end
 
 function Pomelo:_handshakeInit(data) 
---    echoInfo("Pomelo:_handshakeInit(data=%s)",json.encode(data))
+--    printf("Pomelo:_handshakeInit(data=)",json.encode(data))
     if data.sys and data.sys.heartbeat then
         self.heartbeatInterval = data.sys.heartbeat         -- heartbeat interval
         self.heartbeatTimeout = self.heartbeatInterval * 2  -- max heartbeat timeout
